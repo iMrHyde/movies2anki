@@ -425,6 +425,10 @@ class Model(object):
         self.audio_id = 0
         self.deck_name = ""
 
+        self.tvshow = ""
+        self.season = 0
+        self.episode = 0
+
         self.en_srt = ""
         self.ru_srt = ""
 
@@ -944,6 +948,9 @@ class Example(QtGui.QMainWindow):
         optionsGroup = self.createOptionsGroup()
         vbox.addWidget(optionsGroup)
         # ---------------------------------------------------
+        InfoGroup = self.createInfoGroup()
+        vbox.addLayout(InfoGroup)
+        # ---------------------------------------------------
         bottomGroup = self.createBottomGroup()
         vbox.addLayout(bottomGroup)
         # ---------------------------------------------------
@@ -952,6 +959,9 @@ class Example(QtGui.QMainWindow):
         self.subsEngButton.clicked.connect(self.showSubsEngFileDialog)
         self.subsRusButton.clicked.connect(self.showSubsRusFileDialog)
         self.outDirButton.clicked.connect(self.showOutDirectoryDialog)
+        self.tvShowEdit.textChanged.connect(self.changeTVShow)
+        self.seasonEdit.textChanged.connect(self.changeSeason)
+        self.episodeEdit.textChanged.connect(self.changeEpisode)
         self.deckComboBox.editTextChanged.connect(self.setDeckName)
         self.previewButton.clicked.connect(self.preview)
         self.startButton.clicked.connect(self.start)
@@ -1117,6 +1127,15 @@ class Example(QtGui.QMainWindow):
 
     def changeOutDir(self):
         self.model.output_directory = unicode(self.outDirEdit.text()).strip()
+
+    def changeTVShow(self):
+        self.model.tvshow = unicode(self.tvShowEdit.text()).strip()
+
+    def changeSeason(self):
+        self.model.season = int(self.seasonEdit.text())
+
+    def changeEpisode(self):
+        self.model.episode = int(self.episodeEdit.text())
 
     def setVideoWidth(self):
         self.model.video_width = self.widthSpinBox.value()
@@ -1621,6 +1640,36 @@ The longest phrase: %s min. %s sec.""" % (self.model.num_en_subs, self.model.num
         groupBox.setLayout(hbox)
 
         return groupBox
+
+    def createInfoGroup(self):
+        
+        groupBox = QtGui.QGroupBox("Info:")
+
+        self.tvShowEdit = QtGui.QLineEdit()
+        self.tvShowEdit.setText("")
+
+        self.seasonEdit = QtGui.QLineEdit()
+        self.seasonEdit.setText("0")
+        self.seasonEdit.setValidator(QtGui.QIntValidator(0, 99)) 
+
+        self.episodeEdit = QtGui.QLineEdit()
+        self.episodeEdit.setText("0")
+        self.episodeEdit.setValidator(QtGui.QIntValidator(0, 999)) 
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(QtGui.QLabel("TV Show / Movie:"))
+        hbox.addWidget(self.tvShowEdit, stretch=5)
+        hbox.addWidget(QtGui.QLabel("Season:"))
+        hbox.addWidget(self.seasonEdit, stretch=1)
+        hbox.addWidget(QtGui.QLabel("Episode:"))
+        hbox.addWidget(self.episodeEdit, stretch=1)
+
+        groupBox.setLayout(hbox)
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(groupBox)
+
+        return hbox
 
     def createBottomGroup(self):
         groupBox = QtGui.QGroupBox("Name for deck:")
