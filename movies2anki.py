@@ -11,6 +11,7 @@ import sys
 import time
 
 from collections import deque
+from collections import OrderedDict
 from ConfigParser import SafeConfigParser
 from PyQt4 import QtCore, QtGui
 from subprocess import call
@@ -625,6 +626,53 @@ class Model(object):
 
         return ffmpeg_split_timestamps
 
+    def write_json_file(self, deck_name, tvshow, season, episode, en_subs, ru_subs, directory):
+        prefix = format_filename(deck_name)
+        filename = os.path.join(directory, prefix + ".json")
+
+        subs = []
+
+        for idx in range(len(en_subs)):
+            start_time = seconds_to_tsv_time(en_subs[idx][0])
+            end_time = seconds_to_tsv_time(en_subs[idx][1])
+
+            en_sub = en_subs[idx][2]
+            en_sub = re.sub('\n', ' ', en_sub)
+            en_sub = escape_double_quotes(en_sub)
+            
+            ru_sub = ru_subs[idx][2]
+            ru_sub = re.sub('\n', ' ', ru_sub)
+            ru_sub = escape_double_quotes(ru_sub)
+
+            tag = prefix
+            sequence = str(idx + 1).zfill(3) + "_" + start_time
+
+            filename_suffix = ""
+            if self.is_create_clips_with_hardsub:
+                filename_suffix = ".sub"
+
+            video = prefix + "_" + start_time + "-" + end_time + filename_suffix + ".mp4"
+               
+            if self.is_add_dir_to_media_path:
+                video = prefix + ".media/" + video
+
+            subs.append(OrderedDict([
+                ("video", self.encode_str(video)),
+                ("subs_en", self.encode_str(en_sub)),
+                ("subs_ru", self.encode_str(ru_sub))   
+            ]))
+
+        data = OrderedDict([
+            ("tvshow", self.encode_str(tvshow)),
+            ("season", season),
+            ("episode", episode),
+            ("subs", subs)
+        ])
+
+        f_out = open(filename, 'w')
+        f_out.write(json.dumps(data, ensure_ascii=False, indent=4))
+        f_out.close()
+
     def create_subtitles(self):
         print "--------------------------"
         print "Video file: %s" % self.video_file.encode('utf-8')
@@ -714,6 +762,8 @@ class Model(object):
         # Формируем tsv файл для импорта в Anki
         print "Writing tsv file..."
         self.ffmpeg_split_timestamps.append(self.write_tsv_file(self.deck_name, self.en_subs_phrases, self.ru_subs_phrases, self.output_directory))
+        print "Writing json file..."
+        self.write_json_file(self.deck_name, self.tvshow, self.season, self.episode, self.en_subs_phrases, self.ru_subs_phrases, self.output_directory)
 
     def getTimeDelta(self):
         return self.time_delta
